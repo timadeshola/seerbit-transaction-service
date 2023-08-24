@@ -92,10 +92,4 @@ public class AppUtils {
         }
         return valid;
     }
-
-    public static void main(String[] args) {
-//        boolean validDate = isValidDate("2023-08-23");
-//        System.out.println("xxxx => "  + validDate);
-
-    }
 }
