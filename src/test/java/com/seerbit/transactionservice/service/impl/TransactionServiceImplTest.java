@@ -37,8 +37,6 @@ class TransactionServiceImplTest {
 
     @Test
     void createTransactionSucceed() {
-        LocalDateTime localDateTime = AppUtils.parseDateUtil(request.getTimestamp()).toLocalDateTime().minusSeconds(30);
-        request.setTimestamp(localDateTime.format(AppConstants.dateTimeFormatter));
         Transaction transaction = transactionService.createTransaction(request);
         List<Transaction> transactions = transactionService.getTransactions();
         assertThat(transactions).contains(transaction);
@@ -48,7 +46,7 @@ class TransactionServiceImplTest {
 
     @Test
     void createTransactionFailedOnTimestampExceed() {
-        LocalDateTime localDateTime = AppUtils.parseDateUtil(request.getTimestamp()).toLocalDateTime().minusSeconds(31);
+        LocalDateTime localDateTime = AppUtils.parseDateUtil(request.getTimestamp()).toLocalDateTime().plusSeconds(31);
         request.setTimestamp(localDateTime.format(AppConstants.dateTimeFormatter));
         CustomException exception = assertThrows(CustomException.class, () -> {
             transactionService.createTransaction(request);
@@ -72,8 +70,6 @@ class TransactionServiceImplTest {
     @Test
     void transactionStatisticsSucceed() {
 
-        LocalDateTime localDateTime = AppUtils.parseDateUtil(new Timestamp(System.currentTimeMillis()).toString()).toLocalDateTime().plusSeconds(13);
-        request.setTimestamp(localDateTime.format(AppConstants.dateTimeFormatter));
         transactionService.createTransaction(request);
 
         Statistic statistic = transactionService.transactionStatistics();

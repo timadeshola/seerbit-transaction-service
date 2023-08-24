@@ -9,9 +9,7 @@ import com.seerbit.transactionservice.core.constants.AppConstants;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.Type;
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 
@@ -35,14 +33,6 @@ public class AppUtils {
         return mapper;
     }
 
-    public static String toJson(Type type) {
-        try {
-            return mapper().writeValueAsString(type);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Error occurred serializing object to json string, error => " + e.getMessage());
-        }
-    }
-
     public static <T> String toJson(T t) {
         try {
             return mapper().writeValueAsString(t);
@@ -51,26 +41,13 @@ public class AppUtils {
         }
     }
 
-    public static <T> String fromJson(T t) {
-        try {
-            return mapper().writeValueAsString(t);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Error occurred serializing object to json string, error => " + e.getMessage());
-        }
-    }
-
-
-    @SneakyThrows
-    public static <T> T fromJson(String jsonString, Class<T> clazz) {
-        return mapper().readValue(jsonString, clazz);
-    }
-
-    public static boolean timestampCheck(Timestamp timestamp1, Timestamp timestamp2, long seconds) {
-        Duration duration = Duration.ofMillis(timestamp1.getTime()).minus(Duration.ofMillis(timestamp2.getTime()));
-        if (duration.getSeconds() <= seconds) {
-            return true;
-        }
-        return false;
+    public static boolean isTimeDifferenceWithinThreshold(Timestamp timestamp1, Timestamp timestamp2, int thresholdSeconds) {
+        long time1 = timestamp1.getTime();
+        long time2 = timestamp2.getTime();
+        long timeDifferenceInMillis = time1 - time2;
+        long timeDifferenceInSeconds = timeDifferenceInMillis / 1000;
+        log.info("timeDifferenceInSeconds: {}", timeDifferenceInSeconds);
+        return timeDifferenceInSeconds <= thresholdSeconds;
     }
 
     @SneakyThrows

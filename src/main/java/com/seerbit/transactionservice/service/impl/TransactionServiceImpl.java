@@ -41,11 +41,9 @@ public class TransactionServiceImpl implements TransactionService {
             throw new CustomException("Invalid date time format", HttpStatus.valueOf(400));
         }
 
-        if (!AppUtils.isTimeDifferenceWithinThreshold(AppUtils.parseTimestamp(new Timestamp(System.currentTimeMillis())), request.getTimestamp(), thresholdSeconds)) {
+        if (!AppUtils.isTimeDifferenceWithinThreshold(new Timestamp(System.currentTimeMillis()), AppUtils.parseDateUtil(request.getTimestamp()), thresholdSeconds)) {
             throw new CustomException("Date time exceed 30 seconds", HttpStatus.valueOf(204));
         }
-
-
         Transaction transaction = Transaction.builder()
                 .amount(new BigDecimal(request.getAmount()))
                 .timestamp(AppUtils.parseDateUtil(request.getTimestamp()))
@@ -61,7 +59,7 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         List<Transaction> transactionList = this.transactions.parallelStream()
-                .filter(transaction -> AppUtils.isTimeDifferenceWithinThreshold(AppUtils.parseTimestamp(new Timestamp(System.currentTimeMillis())), AppUtils.parseTimestamp(transaction.getTimestamp()), thresholdSeconds)).toList();
+                .filter(transaction -> AppUtils.isTimeDifferenceWithinThreshold(new Timestamp(System.currentTimeMillis()), transaction.getTimestamp(), thresholdSeconds)).toList();
         if (transactionList.isEmpty()) {
             throw new CustomException("No record within the time frame", HttpStatus.valueOf(204));
         }
