@@ -3,14 +3,14 @@ FROM gradle:alpine AS GRADLE_BUILD
 ENV APP_HOME=/app/workspace
 WORKDIR $APP_HOME
 
-COPY build.gradle gradlew $APP_HOME
+COPY build.gradle gradlew settings.gradle $APP_HOME
 COPY gradle $APP_HOME/gradle
 
 COPY . $APP_HOME
 RUN ./gradlew clean build
 
 FROM eclipse-temurin:17-jdk-alpine
-MAINTAINER John Adeshola cyberstarsinfo@gmail.com
+MAINTAINER John Adeshola timadeshola@gmail.com
 ENV ARTIFACT_NAME=transaction-service-0.0.1.jar
 ARG DEPENDENCY=/app/workspace
 ENV APP=/app
