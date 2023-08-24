@@ -7,7 +7,7 @@ COPY build.gradle settings.gradle gradlew $APP_HOME
 COPY gradle $APP_HOME/gradle
 
 COPY . $APP_HOME
-RUN ./gradlew clean build -x test
+RUN ./gradlew clean build
 
 FROM eclipse-temurin:17-jdk-alpine
 MAINTAINER John Adeshola cyberstarsinfo@gmail.com
@@ -17,5 +17,5 @@ ENV APP=/app
 WORKDIR $APP
 COPY --from=GRADLE_BUILD $DEPENDENCY/build/libs/$ARTIFACT_NAME $APP/$ARTIFACT_NAME
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "transaction-servicer-0.0.1.jar"]
+ENTRYPOINT ["java", "-jar", "transaction-service-0.0.1.jar"]
 
