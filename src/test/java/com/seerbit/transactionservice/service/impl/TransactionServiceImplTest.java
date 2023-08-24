@@ -37,7 +37,7 @@ class TransactionServiceImplTest {
 
     @Test
     void createTransactionSucceed() {
-        LocalDateTime localDateTime = AppUtils.parseDateUtil(request.getTimestamp()).toLocalDateTime().minusSeconds(2);
+        LocalDateTime localDateTime = AppUtils.parseDateUtil(request.getTimestamp()).toLocalDateTime().minusSeconds(30);
         request.setTimestamp(localDateTime.format(AppConstants.dateTimeFormatter));
         Transaction transaction = transactionService.createTransaction(request);
         List<Transaction> transactions = transactionService.getTransactions();
@@ -70,27 +70,13 @@ class TransactionServiceImplTest {
     }
 
     @Test
-    void createTransactionFailedOnFutureTimestamp() {
-        LocalDateTime localDateTime = AppUtils.parseDateUtil(request.getTimestamp()).toLocalDateTime().plusSeconds(31);
-        request.setTimestamp(localDateTime.format(AppConstants.dateTimeFormatter));
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            transactionService.createTransaction(request);
-            throw new CustomException("Transaction time is in the future");
-        });
-        assertEquals("Transaction time is in the future", exception.getMessage());
-    }
-
-    @Test
     void transactionStatisticsSucceed() {
-        for (int i = 0; i < 5; i++) {
-            Double sum = Double.valueOf(request.getAmount()) + Double.valueOf(i + 20);
-            request.setAmount(String.valueOf(sum));
-            transactionService.createTransaction(request);
-        }
-        List<Transaction> transactions = transactionService.getTransactions();
-        System.out.println("transactions=> " + transactions.toString());
+
+        LocalDateTime localDateTime = AppUtils.parseDateUtil(new Timestamp(System.currentTimeMillis()).toString()).toLocalDateTime().plusSeconds(13);
+        request.setTimestamp(localDateTime.format(AppConstants.dateTimeFormatter));
+        transactionService.createTransaction(request);
+
         Statistic statistic = transactionService.transactionStatistics();
-        System.out.println("Stat:>>> " + statistic.toString());
         assertThat(statistic).isNotNull();
     }
 

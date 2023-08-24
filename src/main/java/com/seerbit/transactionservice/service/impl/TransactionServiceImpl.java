@@ -7,6 +7,7 @@ import com.seerbit.transactionservice.model.Transaction;
 import com.seerbit.transactionservice.model.request.TransactionRequest;
 import com.seerbit.transactionservice.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
+    @Value("${threshold.seconds}")
+    private int thresholdSeconds;
+
     List<Transaction> transactions = new CopyOnWriteArrayList<>();
 
     @Override
@@ -37,13 +41,10 @@ public class TransactionServiceImpl implements TransactionService {
             throw new CustomException("Invalid date time format", HttpStatus.valueOf(400));
         }
 
-        if (AppUtils.timestampCheck(new Timestamp(System.currentTimeMillis()), AppUtils.parseDateUtil(request.getTimestamp()), 300)) {
+        if (!AppUtils.isTimeDifferenceWithinThreshold(AppUtils.parseTimestamp(new Timestamp(System.currentTimeMillis())), request.getTimestamp(), thresholdSeconds)) {
             throw new CustomException("Date time exceed 30 seconds", HttpStatus.valueOf(204));
         }
 
-        if (AppUtils.parseDateUtil(request.getTimestamp()).getTime() > System.currentTimeMillis()) {
-            throw new CustomException("Transaction time is in the future", HttpStatus.valueOf(422));
-        }
 
         Transaction transaction = Transaction.builder()
                 .amount(new BigDecimal(request.getAmount()))
@@ -59,17 +60,22 @@ public class TransactionServiceImpl implements TransactionService {
             throw new CustomException("No record found", HttpStatus.valueOf(204));
         }
 
-        List<Transaction> transactionList = this.transactions.parallelStream().filter(transaction -> !AppUtils.timestampCheck(new Timestamp(System.currentTimeMillis()), transaction.getTimestamp(), 30)).toList();
+        List<Transaction> transactionList = this.transactions.parallelStream()
+                .filter(transaction -> AppUtils.isTimeDifferenceWithinThreshold(AppUtils.parseTimestamp(new Timestamp(System.currentTimeMillis())), AppUtils.parseTimestamp(transaction.getTimestamp()), thresholdSeconds)).toList();
         if (transactionList.isEmpty()) {
             throw new CustomException("No record within the time frame", HttpStatus.valueOf(204));
         }
 
         return Statistic.builder()
-                .sum(transactionList.stream().map(Transaction::getAmount).toList().stream().reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.HALF_UP))
-                .avg(transactionList.stream().map(Transaction::getAmount).toList().stream().reduce(BigDecimal.ZERO, BigDecimal::add).divide(BigDecimal.valueOf(transactions.size()), RoundingMode.HALF_UP))
-                .max(transactionList.stream().map(Transaction::getAmount).toList().stream().reduce(BigDecimal.ZERO, BigDecimal::max).setScale(2, RoundingMode.HALF_UP))
-                .min(transactionList.stream().map(Transaction::getAmount).toList().stream().min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP))
-                .count((long) transactionList.size())
+                .sum(transactionList.stream().map(Transaction::getAmount).toList().stream()
+                        .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.HALF_UP))
+                .avg(transactionList.stream().map(Transaction::getAmount).toList().stream()
+                        .reduce(BigDecimal.ZERO, BigDecimal::add).divide(BigDecimal.valueOf(transactions.size()), RoundingMode.HALF_UP))
+                .max(transactionList.stream().map(Transaction::getAmount).toList().stream()
+                        .reduce(BigDecimal.ZERO, BigDecimal::max).setScale(2, RoundingMode.HALF_UP))
+                .min(transactionList.stream().map(Transaction::getAmount).toList().stream()
+                        .min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP))
+                .count(transactionList.size())
                 .build();
     }
 

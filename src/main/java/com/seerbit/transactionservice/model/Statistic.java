@@ -28,5 +28,5 @@ public class Statistic implements Serializable {
     private BigDecimal avg;
     private BigDecimal max;
     private BigDecimal min;
-    private Long count;
+    private Integer count;
 }
